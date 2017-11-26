@@ -3,25 +3,25 @@ jobs:
   build-custom-docker-image:
     docker:
       - image: docker:git
+    environment:
+      IMAGE_REPO_HOST: quay.io
+      IMAGE_REPO_NAME: nobuoka/circleci-custom-image-example
+      IMAGE_TAG: md5-9154db4aa3155e4ec306dd33165a36b2
     steps:
       - checkout
       # To enable `docker` command and `docker-compose` command on Docker Executor
       # https://circleci.com/docs/2.0/building-docker-images/
       - setup_remote_docker
       - run:
-          name: Build custom Docker image
-          command: |
-            set -x
-            docker build -t quay.io/nobuoka/circleci-custom-image-example custom-docker-image
-      - run:
-          name: Push custom Docker image
+          name: Build and push custom Docker image if not exist on Quay Repository
           command: |
             set -x
             sh +x -c 'echo $QUAY_TOKEN' | docker login -u=$QUAY_USERNAME --password-stdin quay.io
-            docker push quay.io/nobuoka/circleci-custom-image-example
+            apk update && apk add curl
+            ./custom-docker-image/build-and-push-if-not-exist.sh
   run-on-custom-docker-image:
     docker:
-      - image: quay.io/nobuoka/circleci-custom-image-example
+      - image: quay.io/nobuoka/circleci-custom-image-example:md5-9154db4aa3155e4ec306dd33165a36b2
     steps:
       - checkout
       - run:
